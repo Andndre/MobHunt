@@ -46,7 +46,7 @@ public class ItemHandler {
         spawnBasket = new ItemStack(Material.DIAMOND_SHOVEL, 1);
         ItemMeta meta  = spawnBasket.getItemMeta();
         meta.setDisplayName("Basket Spawner");
-        meta.setLore(Arrays.asList(ChatColor.GREEN + "Right Click on ground Spawn your Basket", "You can only use this once"));
+        meta.setLore(Arrays.asList(ChatColor.GREEN + "Left Click on ground Spawn your Basket", "You can only use this once"));
         meta.addEnchant(Enchantment.LUCK, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         spawnBasket.setItemMeta(meta);
