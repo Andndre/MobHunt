@@ -67,6 +67,7 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private void initialize(){
+        gameManager = new GameManager(this);
         originalCompassTarget = new HashMap<>();
         invh = new InventoryHelper();
         scoreboard = new ScoreboardManager("mobHunt", ChatColor.GOLD + "" + ChatColor.BOLD + "Mob Hunt");
