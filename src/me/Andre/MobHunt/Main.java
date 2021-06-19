@@ -25,43 +25,25 @@ import java.util.*;
 @SuppressWarnings({"unused", "ConstantConditions"})
 public class Main extends JavaPlugin implements Listener {
 
-    private InventoryHelper invh;
-    private ConfigManager settings;
-    private HashMapHelper hashMapHelper;
-    private ScoreboardManager scoreboard;
-    private long delay;
-    private Map<Player, List<EntityType>> collectedType;
-    private Map<String, Integer> points;
-    private Map<Player, Integer> tasks;
-    private Map<Player, List<Location>> locsInBasket;
-    private Map<Player, Location> basketLocs;
-    private BukkitScheduler scheduler;
-    private List<Item> items;
-    private Map<Player, Location> originalCompassTarget;
+    public GameManager gameManager;
+    public InventoryHelper invh;
+    public ConfigManager settings;
+    public HashMapHelper hashMapHelper;
+    public ScoreboardManager scoreboard;
+    public long delay;
+    public Map<Player, List<EntityType>> collectedType;
+    public Map<String, Integer> points;
+    public Map<Player, Integer> tasks;
+    public Map<Player, List<Location>> locsInBasket;
+    public Map<Player, Location> basketLocs;
+    public BukkitScheduler scheduler;
+    public List<Item> items;
+    public Map<Player, Location> originalCompassTarget;
 
 
-    public void increment(Map<String, Integer> map, String player, Integer addition){
-        if(map.containsKey(player)){
-            map.replace(player, map.get(player) + addition);
-        }
-        else {
-            map.put(player, addition);
-        }
-    }
 
-    public void countDown(){
-        scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
-            int count = 10;
-            @Override
-            public void run() {
-                getServer().broadcastMessage(ChatColor.RED + "time left: " + count + " seconds");
-                count--;
-                if(count < 0){
-                    stopGame();
-                }
-            }
-        }, 0L, 20L);
-    }
+
+
 
     public void msgPoints(){
         for(Map.Entry<String, Integer> point: points.entrySet()){
@@ -70,39 +52,7 @@ public class Main extends JavaPlugin implements Listener {
     }
 
 
-    private void stopGame(){
-        scheduler.cancelTasks(this);
 
-        // remove floating items
-        for(Item item: items){
-            item.remove();
-        }
-        Map<String, Integer> sorted = hashMapHelper.sortByValue(points, true);
-        getServer().broadcastMessage("" + ChatColor.GOLD + ChatColor.BOLD + "Final Result!");
-
-        // leaderboard text color
-        int i = 1;
-        String[] col = {ChatColor.GOLD + "" + ChatColor.GOLD,
-                        ChatColor.GOLD + "",
-                        ChatColor.YELLOW + ""};
-
-        // sort and display final result
-        for (Map.Entry<String, Integer> point : sorted.entrySet()){
-            getServer().broadcastMessage(((i > col.length) ? "": col[i -1]) + i + ". " + point.getKey() + ": " + point.getValue());
-            i ++;
-        }
-
-        // reset compass target
-        for(Map.Entry<Player, Location> oct: originalCompassTarget.entrySet()){
-            oct.getKey().setCompassTarget(oct.getValue());
-        }
-
-        scoreboard.remove();
-
-        delay = 0L;
-
-        clearAll();
-    }
 
 
     public void giveSpawnBasketToAllOnLinePlayers(){
@@ -131,30 +81,7 @@ public class Main extends JavaPlugin implements Listener {
         hashMapHelper = new HashMapHelper();
     }
 
-    public void reset(){
-        scheduler.cancelTasks(this);
 
-        // remove floating items
-        for(Item item: items){
-            item.remove();
-        }
-        clearAll();
-
-        scoreboard.remove();
-
-        delay = 0L;
-    }
-
-    private void clearAll(){
-        items.clear();
-        basketLocs.clear();
-        collectedType.clear();
-        locsInBasket.clear();
-        items.clear();
-        tasks.clear();
-        points.clear();
-        originalCompassTarget.clear();
-    }
 
 
 
@@ -166,14 +93,14 @@ public class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        reset();
+        gameManager.reset();
     }
 
     @SuppressWarnings("NullableProblems")
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(command.getName().equalsIgnoreCase("MHDisable")){
-            reset();
+            gameManager.reset();
             return true;
         }
         else if(command.getName().equalsIgnoreCase("MHPoints")){
@@ -418,9 +345,9 @@ public class Main extends JavaPlugin implements Listener {
                                 eLoc.setZ(eLoc.getBlock().getZ());
                                 for (Location loc : locsInBasket.get(player)) {
                                     if (loc.getX() == eLoc.getX() && loc.getY() == eLoc.getY() && loc.getZ() == eLoc.getZ()) {
-                                        int increment = getPointIncrement(player, e.getType());
+                                        int increment = gameManager.getPointIncrement(player, e.getType());
                                         e.remove();
-                                        increment(points, player.getName(), increment);
+                                        gameManager.increment(points, player.getName(), increment);
                                         getServer().broadcastMessage("" + ChatColor.GREEN + player.getName() +
                                                 " collected a "  + ((increment == 5) ? ("" + ChatColor.BOLD + "new mob") : "mob") +
                                                 ". + " + increment +  " point" + ((increment > 1) ? "s": ""));
@@ -436,33 +363,10 @@ public class Main extends JavaPlugin implements Listener {
                 item.setVelocity(new Vector(0, 0, 0));
             }
         }, 0L, 20L), false);
-        scheduler.scheduleSyncDelayedTask(this, this::countDown, delay);
+        scheduler.scheduleSyncDelayedTask(this, gameManager::countDown, delay);
     }
 
 
 
-    public int getPointIncrement(Player player, EntityType et){
-
-        // If the player collected a 'NEW' type of mobs, they'll get 5 points, otherwise they'll get 1 point
-        List<EntityType> et1 = new ArrayList<>();
-        et1.add(et);
-        if(collectedType.get(player) != null) {
-            if(!collectedType.get(player).contains(et)){
-                if(collectedType.containsKey(player)){
-                    List<EntityType> ct = collectedType.get(player);
-                    ct.add(et);
-                    collectedType.replace(player, ct);
-                }else{
-                    collectedType.put(player, et1);
-                }
-                return 5;
-            }else {
-                return 1;
-            }
-        }else{
-            collectedType.put(player, et1);
-            return 5;
-        }
-    }
 
 }
