@@ -2,6 +2,7 @@ package me.Andre.MobHunt;
 
 import me.Andre.API.ConfigManager;
 import me.Andre.API.HashMapHelper;
+import me.Andre.API.InventoryHelper;
 import me.Andre.API.ScoreboardManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -24,6 +25,7 @@ import java.util.*;
 @SuppressWarnings({"unused", "ConstantConditions"})
 public class Main extends JavaPlugin implements Listener {
 
+    private InventoryHelper invh;
     private ConfigManager settings;
     private HashMapHelper hashMapHelper;
     private ScoreboardManager scoreboard;
@@ -35,6 +37,7 @@ public class Main extends JavaPlugin implements Listener {
     private Map<Player, Location> basketLocs;
     private BukkitScheduler scheduler;
     private List<Item> items;
+    private Map<Player, Location> originalCompassTarget;
 
 
     public void increment(Map<String, Integer> map, String player, Integer addition){
@@ -62,31 +65,41 @@ public class Main extends JavaPlugin implements Listener {
 
     public void msgPoints(){
         for(Map.Entry<String, Integer> point: points.entrySet()){
-            this.getServer().broadcastMessage(point.getKey() + ": " + point.getValue());
+            getServer().broadcastMessage(point.getKey() + ": " + point.getValue());
         }
     }
 
 
     private void stopGame(){
-        this.scheduler.cancelTasks(this);
+        scheduler.cancelTasks(this);
+
+        // remove floating items
         for(Item item: items){
             item.remove();
         }
         Map<String, Integer> sorted = hashMapHelper.sortByValue(points, true);
         getServer().broadcastMessage("" + ChatColor.GOLD + ChatColor.BOLD + "Final Result!");
 
+        // leaderboard text color
         int i = 1;
         String[] col = {ChatColor.GOLD + "" + ChatColor.GOLD,
                         ChatColor.GOLD + "",
                         ChatColor.YELLOW + ""};
+
+        // sort and display final result
         for (Map.Entry<String, Integer> point : sorted.entrySet()){
             getServer().broadcastMessage(((i > col.length) ? "": col[i -1]) + i + ". " + point.getKey() + ": " + point.getValue());
             i ++;
         }
 
+        // reset compass target
+        for(Map.Entry<Player, Location> oct: originalCompassTarget.entrySet()){
+            oct.getKey().setCompassTarget(oct.getValue());
+        }
+
         scoreboard.remove();
 
-        this.delay = 0L;
+        delay = 0L;
 
         clearAll();
     }
@@ -99,26 +112,29 @@ public class Main extends JavaPlugin implements Listener {
             p.sendMessage("Collect mobs to your hole as many as you can!");
             p.sendMessage("Every time you collect a NEW type of mob you'll get 5 points, Otherwise you'll only get 1 point");
             Location loc = p.getLocation().clone().add(0, 1, 0);
-            loc.getWorld().dropItemNaturally(loc, ItemHandler.getSpawnBasket());
+            invh.giveItem(p, ItemHandler.getSpawnBasket());
         }
     }
 
     private void initialize(){
+        originalCompassTarget = new HashMap<>();
+        invh = new InventoryHelper();
         scoreboard = new ScoreboardManager("mobHunt", ChatColor.GOLD + "" + ChatColor.BOLD + "Mob Hunt");
         settings = new ConfigManager(this, "settings.yml");
-        this.basketLocs = new HashMap<>();
-        this.collectedType = new HashMap<>();
-        this.points = new HashMap<>();
-        this.locsInBasket = new HashMap<>();
-        this.tasks = new HashMap<>();
-        this.items = new ArrayList<>();
-        this.scheduler = getServer().getScheduler();
+        basketLocs = new HashMap<>();
+        collectedType = new HashMap<>();
+        points = new HashMap<>();
+        locsInBasket = new HashMap<>();
+        tasks = new HashMap<>();
+        items = new ArrayList<>();
+        scheduler = getServer().getScheduler();
         hashMapHelper = new HashMapHelper();
     }
 
     public void reset(){
-        this.scheduler.cancelTasks(this);
+        scheduler.cancelTasks(this);
 
+        // remove floating items
         for(Item item: items){
             item.remove();
         }
@@ -126,17 +142,18 @@ public class Main extends JavaPlugin implements Listener {
 
         scoreboard.remove();
 
-        this.delay = 0L;
+        delay = 0L;
     }
 
     private void clearAll(){
-        this.items.clear();
-        this.basketLocs.clear();
-        this.collectedType.clear();
-        this.locsInBasket.clear();
-        this.items.clear();
-        this.tasks.clear();
-        this.points.clear();
+        items.clear();
+        basketLocs.clear();
+        collectedType.clear();
+        locsInBasket.clear();
+        items.clear();
+        tasks.clear();
+        points.clear();
+        originalCompassTarget.clear();
     }
 
 
@@ -173,28 +190,28 @@ public class Main extends JavaPlugin implements Listener {
 
             switch (args[0]) {
                 case "5Minutes":
-                    this.delay = aMinute * 5L;
+                    delay = aMinute * 5L;
                     break;
                 case "10Minutes":
-                    this.delay = aMinute * 10L;
+                    delay = aMinute * 10L;
                     break;
                 case "20Minutes":
-                    this.delay = aMinute * 20L;
+                    delay = aMinute * 20L;
                     break;
                 case "30Minutes":
-                    this.delay = aMinute * 30L;
+                    delay = aMinute * 30L;
                     break;
                 case "45Minutes":
-                    this.delay = aMinute * 45L;
+                    delay = aMinute * 45L;
                     break;
                 case "1Hour":
-                    this.delay = aMinute * 60L;
+                    delay = aMinute * 60L;
                     break;
                 case "1Hour30Minutes":
-                    this.delay = aMinute * 90L;
+                    delay = aMinute * 90L;
                     break;
                 case "2Hours":
-                    this.delay = aMinute * 120L;
+                    delay = aMinute * 120L;
                     break;
                 default:
                     return false;
@@ -209,7 +226,7 @@ public class Main extends JavaPlugin implements Listener {
             for(Player p: getServer().getOnlinePlayers()){
                 PlayerInventory inventory = p.getInventory();
                 if(!inventory.contains(Material.COMPASS)){
-                    inventory.addItem(new ItemStack(Material.COMPASS));
+                    invh.giveItem(p, new ItemStack(Material.COMPASS));
                 }
             }
             getServer().broadcastMessage("Mob Hunt started for " + (delay/20/60) + " Minutes!");
@@ -302,10 +319,10 @@ public class Main extends JavaPlugin implements Listener {
 
     public void spawnBasket(Location loc, Material mat, int distance, final Player player, long delay) {
 
-        if (this.basketLocs.containsKey(player)) {
-            this.basketLocs.replace(player, loc);
+        if (basketLocs.containsKey(player)) {
+            basketLocs.replace(player, loc);
         } else {
-            this.basketLocs.put(player, loc);
+            basketLocs.put(player, loc);
         }
 
         Location centerXp = loc.clone().add(distance, -distance, 0.0D);
@@ -327,7 +344,7 @@ public class Main extends JavaPlugin implements Listener {
             }
         }
 
-        this.locsInBasket.put(player, locs1);
+        locsInBasket.put(player, locs1);
 
         double horizon;
         for (horizon = centerXn.getZ() - distance; horizon < centerXn.getZ() + distance; horizon+=1) {
@@ -375,11 +392,15 @@ public class Main extends JavaPlugin implements Listener {
 
         ItemStack is = ItemHandler.getRandomDiamondItems();
         final Item item = player.getWorld().dropItemNaturally(loc.clone().add(0.0D, 2.0D, 0.0D), is);
-        this.items.add(item);
+        items.add(item);
 
+        // remember player's original compass target
+        originalCompassTarget.put(player, player.getCompassTarget());
+
+        // set compass target to player's basket
         player.setCompassTarget(basketLocs.get(player));
 
-        hashMapHelper.putOrReplace(this.tasks, player, this.scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+        hashMapHelper.putOrReplace(tasks, player, scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
             int c = 0;
 
             public void run() {
@@ -415,7 +436,7 @@ public class Main extends JavaPlugin implements Listener {
                 item.setVelocity(new Vector(0, 0, 0));
             }
         }, 0L, 20L), false);
-        this.scheduler.scheduleSyncDelayedTask(this, this::countDown, delay);
+        scheduler.scheduleSyncDelayedTask(this, this::countDown, delay);
     }
 
 
