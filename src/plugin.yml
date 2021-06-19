@@ -1,0 +1,12 @@
+name: MobHunt
+version: 1.1.0
+main: me.Andre.MobHunt.Main
+api-version: 1.15
+commands:
+  MHDisable:
+    description: Stop, and Disable MH
+  MHPoints:
+    description: Broadcast message all points
+  MHStart:
+    description: Start MH
+  MHSetBasketSize:
