@@ -25,6 +25,7 @@ import java.util.*;
 @SuppressWarnings({"unused", "ConstantConditions"})
 public class Main extends JavaPlugin implements Listener {
 
+    public List<Block> bedrocks;
     public GameManager gameManager;
     public InventoryHelper invh;
     public ConfigManager settings;
@@ -40,20 +41,11 @@ public class Main extends JavaPlugin implements Listener {
     public List<Item> items;
     public Map<Player, Location> originalCompassTarget;
 
-
-
-
-
-
     public void msgPoints(){
         for(Map.Entry<String, Integer> point: points.entrySet()){
             getServer().broadcastMessage(point.getKey() + ": " + point.getValue());
         }
     }
-
-
-
-
 
     public void giveSpawnBasketToAllOnLinePlayers(){
         for(Player p: getServer().getOnlinePlayers()){
@@ -67,6 +59,7 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private void initialize(){
+        bedrocks = new ArrayList<>();
         gameManager = new GameManager(this);
         originalCompassTarget = new HashMap<>();
         invh = new InventoryHelper();
@@ -81,10 +74,6 @@ public class Main extends JavaPlugin implements Listener {
         scheduler = getServer().getScheduler();
         hashMapHelper = new HashMapHelper();
     }
-
-
-
-
 
     @Override
     public void onEnable() {
@@ -280,6 +269,7 @@ public class Main extends JavaPlugin implements Listener {
             for (vertical = centerYn.getY(); vertical <= loc.getY(); vertical+=1) {
                 Location curr = new Location(loc.getWorld(), centerXn.getX(), vertical, horizon);
                 curr.getBlock().setType(mat);
+                bedrocks.add(curr.getBlock());
             }
         }
         for (horizon = centerXp.getZ() + distance; horizon > centerXp.getZ() - distance; horizon-=1) {
@@ -287,6 +277,7 @@ public class Main extends JavaPlugin implements Listener {
             for (vertical = centerYn.getY(); vertical <= loc.getY(); vertical+=1) {
                 Location curr = new Location(loc.getWorld(), centerXp.getX(), vertical, horizon);
                 curr.getBlock().setType(mat);
+                bedrocks.add(curr.getBlock());
             }
         }
         for (horizon = centerZn.getX() + distance; horizon > centerZn.getX() - distance; horizon-=1) {
@@ -294,6 +285,7 @@ public class Main extends JavaPlugin implements Listener {
             for (vertical = centerYn.getY(); vertical <= loc.getY(); vertical+=1) {
                 Location curr = new Location(loc.getWorld(), horizon, vertical, centerZn.getZ());
                 curr.getBlock().setType(mat);
+                bedrocks.add(curr.getBlock());
             }
         }
         for (horizon = centerZp.getX() - distance; horizon < centerZp.getX() + distance; horizon+=1) {
@@ -301,6 +293,7 @@ public class Main extends JavaPlugin implements Listener {
             for (vertical = centerYn.getY(); vertical <= loc.getY(); vertical+=1) {
                 Location curr = new Location(loc.getWorld(), horizon, vertical, centerZp.getZ());
                 curr.getBlock().setType(mat);
+                bedrocks.add(curr.getBlock());
             }
         }
         double x;
@@ -309,6 +302,7 @@ public class Main extends JavaPlugin implements Listener {
             for (z = centerYn.getZ() - distance; z <= centerYn.getZ() + distance; z+=1) {
                 Location curr = new Location(loc.getWorld(), x, centerYn.getY(), z);
                 curr.getBlock().setType(mat);
+                bedrocks.add(curr.getBlock());
             }
         }
 
@@ -339,7 +333,8 @@ public class Main extends JavaPlugin implements Listener {
                             if (!e.getType().name().contains("DROPPED")
                                     && !(e instanceof Player)
                                     && !e.getType().name().contains("BOAT")
-                                    && !e.getType().name().contains("MINECART")) {
+                                    && !e.getType().name().contains("MINECART")
+                                    && !e.getType().name().contains("ARROW")) {
                                 Location eLoc = e.getLocation().clone();
                                 eLoc.setX(eLoc.getBlock().getX());
                                 eLoc.setY(eLoc.getBlock().getY());
@@ -366,8 +361,4 @@ public class Main extends JavaPlugin implements Listener {
         }, 0L, 20L), false);
         scheduler.scheduleSyncDelayedTask(this, gameManager::countDown, delay);
     }
-
-
-
-
 }

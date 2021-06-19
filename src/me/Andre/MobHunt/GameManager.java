@@ -2,6 +2,8 @@ package me.Andre.MobHunt;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -98,6 +100,11 @@ public class GameManager {
         plugin.tasks.clear();
         plugin.points.clear();
         plugin.originalCompassTarget.clear();
+
+        for(Block b: plugin.bedrocks){
+            b.setType(Material.AIR);
+        }
+        plugin.bedrocks.clear();
     }
 
     public int getPointIncrement(Player player, EntityType et){
