@@ -2,6 +2,8 @@ package me.Andre.MobHunt;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -45,9 +47,6 @@ public class GameManager {
         plugin.scheduler.cancelTasks(plugin);
 
         // remove floating items
-        for(Item item: plugin.items){
-            item.remove();
-        }
         Map<String, Integer> sorted = plugin.hashMapHelper.sortByValue(plugin.points, true);
         plugin.getServer().broadcastMessage("" + ChatColor.GOLD + ChatColor.BOLD + "Final Result!");
 
@@ -78,10 +77,6 @@ public class GameManager {
     public void reset(){
         plugin.scheduler.cancelTasks(plugin);
 
-        // remove floating items
-        for(Item item: plugin.items){
-            item.remove();
-        }
         clearAll();
 
         plugin.scoreboard.remove();
@@ -98,6 +93,15 @@ public class GameManager {
         plugin.tasks.clear();
         plugin.points.clear();
         plugin.originalCompassTarget.clear();
+
+        for(Block b: plugin.bedrocks){
+            b.setType(Material.AIR);
+        }
+
+        for(Item item: plugin.items){
+            item.remove();
+        }
+        plugin.bedrocks.clear();
     }
 
     public int getPointIncrement(Player player, EntityType et){
