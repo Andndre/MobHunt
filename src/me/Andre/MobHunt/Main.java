@@ -1,9 +1,6 @@
 package me.Andre.MobHunt;
 
-import me.Andre.API.ConfigManager;
-import me.Andre.API.HashMapHelper;
-import me.Andre.API.InventoryHelper;
-import me.Andre.API.ScoreboardManager;
+
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -20,16 +17,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
+import me.andre.mcplugz.ConfigManager;
+import me.andre.mcplugz.InventoryHelper;
+import me.andre.mcplugz.HashmapHelper;
+import me.andre.mcplugz.ScoreboardManager;
+
 import java.util.*;
 
-@SuppressWarnings({"unused", "ConstantConditions"})
 public class Main extends JavaPlugin implements Listener {
 
     public List<Block> bedrocks;
     public GameManager gameManager;
-    public InventoryHelper invh;
     public ConfigManager settings;
-    public HashMapHelper hashMapHelper;
+    public HashmapHelper hashMapHelper;
     public ScoreboardManager scoreboard;
     public long delay;
     public Map<Player, List<EntityType>> collectedType;
@@ -47,14 +47,13 @@ public class Main extends JavaPlugin implements Listener {
         }
     }
 
-    public void giveSpawnBasketToAllOnLinePlayers(){
+    public void giveBasketSpawnerToAllOnLinePlayers(){
         for(Player p: getServer().getOnlinePlayers()){
             p.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "How to Play: ");
             p.sendMessage(ChatColor.BOLD + "Left click" + "" + "" +  ChatColor.WHITE +  " on the ground to Spawn your basket!");
             p.sendMessage("Collect mobs to your hole as many as you can!");
             p.sendMessage("Every time you collect a NEW type of mob you'll get 5 points, Otherwise you'll only get 1 point");
-            Location loc = p.getLocation().clone().add(0, 1, 0);
-            invh.giveItem(p, ItemHandler.getSpawnBasket());
+            InventoryHelper.giveItem(p, ItemHandler.getSpawnBasket());
         }
     }
 
@@ -62,7 +61,6 @@ public class Main extends JavaPlugin implements Listener {
         bedrocks = new ArrayList<>();
         gameManager = new GameManager(this);
         originalCompassTarget = new HashMap<>();
-        invh = new InventoryHelper();
         scoreboard = new ScoreboardManager("mobHunt", ChatColor.GOLD + "" + ChatColor.BOLD + "Mob Hunt");
         settings = new ConfigManager(this, "settings.yml");
         basketLocs = new HashMap<>();
@@ -72,7 +70,6 @@ public class Main extends JavaPlugin implements Listener {
         tasks = new HashMap<>();
         items = new ArrayList<>();
         scheduler = getServer().getScheduler();
-        hashMapHelper = new HashMapHelper();
     }
 
     @Override
@@ -139,11 +136,11 @@ public class Main extends JavaPlugin implements Listener {
                 scoreboard.put(player.getName(), 0);
             }
 
-            giveSpawnBasketToAllOnLinePlayers();
+            giveBasketSpawnerToAllOnLinePlayers();
             for(Player p: getServer().getOnlinePlayers()){
                 PlayerInventory inventory = p.getInventory();
                 if(!inventory.contains(Material.COMPASS)){
-                    invh.giveItem(p, new ItemStack(Material.COMPASS));
+                    InventoryHelper.giveItem(p, new ItemStack(Material.COMPASS));
                 }
             }
             getServer().broadcastMessage("Mob Hunt started for " + (delay/20/60) + " Minutes!");
@@ -322,7 +319,7 @@ public class Main extends JavaPlugin implements Listener {
         // set compass target to player's basket
         player.setCompassTarget(basketLocs.get(player));
 
-        hashMapHelper.putOrReplace(tasks, player, scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+        HashmapHelper.putOrReplace(tasks, player, scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
             int c = 0;
 
             public void run() {
