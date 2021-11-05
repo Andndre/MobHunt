@@ -12,7 +12,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Arrays;
 import java.util.Random;
 
-@SuppressWarnings("ALL")
 public class ItemHandler {
     private static final Random random = new Random();
 

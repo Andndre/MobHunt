@@ -8,11 +8,12 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
+import me.andre.mcplugz.HashmapHelper;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("unused")
 public class GameManager {
     Main plugin;
 
@@ -47,7 +48,7 @@ public class GameManager {
         plugin.scheduler.cancelTasks(plugin);
 
         // remove floating items
-        Map<String, Integer> sorted = plugin.hashMapHelper.sortByValue(plugin.points, true);
+        Map<String, Integer> sorted = HashmapHelper.sortByValue(plugin.points, true);
         plugin.getServer().broadcastMessage("" + ChatColor.GOLD + ChatColor.BOLD + "Final Result!");
 
         // leaderboard text color
