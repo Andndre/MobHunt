@@ -1,6 +1,6 @@
 # MobHunt
 
-Tested on Spigot Server (Minecraft 1.15)
+Tested on Spigot Server (Minecraft 1.15.2)
 
 ## commands:
 - `MHDisable`: Stop Mobhunt
