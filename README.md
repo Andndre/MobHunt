@@ -1,5 +1,7 @@
 # MobHunt
 
+Tested on Spigot Server (Minecraft 1.15)
+
 ## commands:
 - `MHDisable`: Stop Mobhunt
 - `MHPoints`: Broadcast message all points
